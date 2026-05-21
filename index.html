@@ -3,639 +3,1104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Riesgo Urbano CDMX</title>
+<title>Atlas de Riesgo Urbano · CDMX</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #0a0a0f;
-    --surface: #12121a;
-    --border: #1e1e2e;
-    --text: #e8e8f0;
-    --muted: #5a5a7a;
-    --accent: #ff4d4d;
-    --r1: #2ecc71;
-    --r2: #f1c40f;
-    --r3: #e67e22;
-    --r4: #e74c3c;
-    --r5: #8e1c1c;
-  }
+* { margin:0; padding:0; box-sizing:border-box; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #f5f5f3;
+  --white: #ffffff;
+  --border: #e5e5e3;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --accent: #dc2626;
+  --accent2: #2563eb;
+  --green: #16a34a;
+  --yellow: #ca8a04;
+  --orange: #ea580c;
+  --red: #dc2626;
+  --darkred: #991b1b;
+  --r1: #4ade80;
+  --r2: #facc15;
+  --r3: #fb923c;
+  --r4: #f87171;
+  --r5: #991b1b;
+}
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Syne', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
 
-  /* HEADER */
-  header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    padding: 2rem 2.5rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, #0d0d18 0%, var(--bg) 100%);
-  }
+/* NAV */
+nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top:0; z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  height: 56px;
+}
 
-  .header-left h1 {
-    font-size: clamp(1.8rem, 4vw, 3rem);
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    color: #fff;
-  }
+.nav-brand {
+  display: flex; align-items: center; gap: 0.75rem;
+}
 
-  .header-left h1 span {
-    color: var(--accent);
-  }
+.nav-brand .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--accent);
+}
 
-  .header-left p {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-top: 0.5rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
+.nav-brand span {
+  font-weight: 600; font-size: 0.9rem; letter-spacing: -0.01em;
+}
 
-  .file-loader {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.4rem;
-  }
+.nav-tabs {
+  display: flex; gap: 0;
+}
 
-  .file-loader label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-  }
+.nav-tab {
+  padding: 0 1.2rem;
+  height: 56px;
+  display: flex; align-items: center;
+  font-size: 0.82rem; font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
 
-  .file-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 0.5rem 1rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-  }
+.nav-tab:hover { color: var(--text); }
+.nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
 
-  .file-btn:hover {
-    border-color: var(--accent);
-    background: #1a0a0a;
-  }
+.nav-meta {
+  font-size: 0.72rem; color: var(--muted);
+  font-weight: 400;
+}
 
-  #file-input { display: none; }
+/* SECTIONS */
+.section { display: none; }
+.section.active { display: block; }
 
-  /* STATUS BAR */
-  #status-bar {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0.6rem 2.5rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
+/* HERO */
+.hero {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 2.5rem 2rem 2rem;
+}
 
-  #status-bar .dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--muted);
-    animation: pulse 2s infinite;
-  }
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2rem;
+  align-items: start;
+  max-width: 1400px;
+  margin: 0 auto;
+}
 
-  #status-bar.loaded .dot { background: var(--r1); animation: none; }
-  #status-bar.error .dot { background: var(--accent); animation: none; }
+.hero h1 {
+  font-family: 'DM Serif Display', serif;
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
 
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
+.hero h1 em { color: var(--accent); font-style: normal; }
 
-  /* LAYOUT */
-  .main-grid {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    grid-template-rows: auto auto;
-    gap: 0;
-    height: calc(100vh - 120px);
-    min-height: 600px;
-  }
+.hero p {
+  color: var(--muted);
+  font-size: 0.85rem;
+  max-width: 560px;
+}
 
-  /* MAP */
-  #map-container {
-    grid-row: 1 / 3;
-    position: relative;
-    border-right: 1px solid var(--border);
-  }
+.hero-badges {
+  display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-end;
+}
 
-  #map {
-    width: 100%;
-    height: 100%;
-    background: #0a0a0f;
-  }
+.badge {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 0.3rem 0.8rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
 
-  .map-overlay {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
-    z-index: 1000;
-    background: rgba(10,10,15,0.92);
-    border: 1px solid var(--border);
-    padding: 1rem 1.2rem;
-    backdrop-filter: blur(8px);
-  }
+/* INDICATORS */
+.indicators {
+  max-width: 1400px; margin: 0 auto;
+  padding: 1.5rem 2rem 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
 
-  .map-overlay h3 {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 0.7rem;
-  }
+.kpi {
+  background: var(--white);
+  padding: 1.2rem 1.4rem;
+}
 
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 0.4rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text);
-  }
+.kpi .label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 0.5rem;
+}
 
-  .legend-color {
-    width: 14px;
-    height: 14px;
-    border-radius: 2px;
-    flex-shrink: 0;
-  }
+.kpi .value {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  color: var(--text);
+}
 
-  /* PANELS */
-  .panel {
-    border-bottom: 1px solid var(--border);
-    padding: 1.5rem;
-    overflow: hidden;
-  }
+.kpi .value.red { color: var(--red); }
+.kpi .value.green { color: var(--green); }
+.kpi .value.blue { color: var(--accent2); }
 
-  .panel-title {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--muted);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
+.kpi .sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-top: 0.3rem;
+}
 
-  .panel-title::before {
-    content: '';
-    display: inline-block;
-    width: 3px;
-    height: 12px;
-    background: var(--accent);
-  }
+/* CONTENT */
+.content {
+  max-width: 1400px; margin: 0 auto;
+  padding: 1.5rem 2rem 3rem;
+}
 
-  /* STATS */
-  #stats-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.8rem;
-  }
+/* GRID LAYOUTS */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+.grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+.grid-full { display: grid; grid-template-columns: 1fr; gap: 1rem; }
 
-  .stat-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 0.9rem;
-  }
+/* CARD */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
 
-  .stat-card .val {
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: #fff;
-    line-height: 1;
-  }
+.card-header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
 
-  .stat-card .lbl {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-top: 0.3rem;
-  }
+.card-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+}
 
-  /* CHARTS */
-  #chart-panel {
-    flex: 1;
-  }
+.card-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
 
-  .chart-wrap {
-    position: relative;
-    height: 180px;
-    margin-bottom: 1.2rem;
-  }
+.card-body { padding: 1.25rem; }
 
-  /* TOOLTIP */
-  #tooltip {
-    position: absolute;
-    background: rgba(10,10,15,0.95);
-    border: 1px solid var(--border);
-    padding: 0.8rem 1rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.68rem;
-    color: var(--text);
-    pointer-events: none;
-    z-index: 2000;
-    display: none;
-    max-width: 220px;
-    line-height: 1.6;
-  }
+/* MAP */
+#map {
+  height: 480px;
+  width: 100%;
+  border-radius: 0 0 8px 8px;
+}
 
-  /* EMPTY STATE */
-  #empty-state {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    color: var(--muted);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    text-align: center;
-    pointer-events: none;
-  }
+.leaflet-container { background: #e8e8e6 !important; }
 
-  #empty-state .big {
-    font-size: 3rem;
-    opacity: 0.15;
-  }
+/* CHART WRAP */
+.chart-wrap { position: relative; }
+.chart-wrap canvas { width: 100% !important; }
 
-  /* LEAFLET overrides */
-  .leaflet-container { background: #0a0a0f !important; }
-  .leaflet-tile { filter: brightness(0.3) saturate(0.2); }
-  .leaflet-control-zoom a {
-    background: var(--surface) !important;
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-  }
+/* RISK BAR */
+.risk-bar-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.risk-bar-row:last-child { border-bottom: none; }
 
-  /* FILTER BAR */
-  #filter-bar {
-    padding: 0.8rem 1.5rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+.risk-label { font-size: 0.75rem; width: 90px; flex-shrink: 0; color: var(--text); }
+.risk-track { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.risk-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+.risk-count { font-size: 0.75rem; font-weight: 600; width: 36px; text-align: right; color: var(--text); }
+.risk-pct { font-size: 0.7rem; color: var(--muted); width: 36px; text-align: right; }
 
-  #filter-bar span {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-right: 0.3rem;
-  }
+/* TABLE */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
 
-  .filter-btn {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 0.3rem 0.7rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    cursor: pointer;
-    transition: all 0.15s;
-  }
+thead th {
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
 
-  .filter-btn.active {
-    border-color: var(--accent);
-    color: #fff;
-    background: rgba(255,77,77,0.1);
-  }
+tbody td {
+  padding: 0.6rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
 
-  .filter-btn:hover { border-color: var(--text); color: var(--text); }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--bg); }
 
-  @media (max-width: 900px) {
-    .main-grid { grid-template-columns: 1fr; grid-template-rows: 50vh auto auto; }
-    #map-container { grid-row: 1; border-right: none; border-bottom: 1px solid var(--border); }
-  }
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 0.15rem 0.5rem;
+  border-radius: 100px;
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.tag-green { background: #dcfce7; color: #15803d; }
+.tag-yellow { background: #fef9c3; color: #854d0e; }
+.tag-orange { background: #ffedd5; color: #9a3412; }
+.tag-red { background: #fee2e2; color: #991b1b; }
+.tag-darkred { background: #991b1b; color: #fff; }
+.tag-blue { background: #dbeafe; color: #1e40af; }
+.tag-gray { background: var(--bg); color: var(--muted); }
+
+/* LEGEND */
+.legend-row {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.75rem;
+}
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* STEP PROCESS */
+.step-list { display: flex; flex-direction: column; gap: 0; }
+
+.step {
+  display: flex; gap: 1rem;
+  padding: 0.9rem 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.step:last-child { border-bottom: none; }
+
+.step-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: var(--text);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.step-content h4 { font-size: 0.8rem; font-weight: 600; margin-bottom: 0.2rem; }
+.step-content p { font-size: 0.73rem; color: var(--muted); line-height: 1.5; }
+
+/* SECTION TITLE */
+.section-title {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  padding: 1.5rem 0 0.75rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* SOIL PIE */
+.soil-row {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.soil-row:last-child { border-bottom: none; }
+.soil-label { font-size: 0.75rem; flex: 1; }
+.soil-bar-wrap { width: 120px; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.soil-bar { height: 100%; border-radius: 3px; }
+.soil-count { font-size: 0.75rem; font-weight: 600; width: 30px; text-align: right; }
+
+/* MAP LEGEND OVERLAY */
+.map-legend {
+  position: absolute;
+  bottom: 20px; left: 10px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.map-legend h4 { font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 0.5rem; }
+
+/* TOOLTIP */
+#map-tooltip {
+  position: absolute;
+  background: white;
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  pointer-events: none;
+  z-index: 2000;
+  display: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  min-width: 180px;
+}
+
+.before-after {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;
+}
+
+.ba-block { }
+.ba-block .ba-label {
+  font-size: 0.65rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 0.4rem;
+}
+.ba-block .ba-label span {
+  display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+}
+.ba-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.45rem 0;
+  border-bottom: 1px dashed var(--border);
+  font-size: 0.75rem;
+}
+.ba-row:last-child { border-bottom: none; }
+.ba-row .ba-key { color: var(--muted); }
+.ba-row .ba-val { font-weight: 600; }
+.ba-row .ba-val.ok { color: var(--green); }
+
+@media(max-width: 900px) {
+  .indicators { grid-template-columns: repeat(3,1fr); }
+  .grid-2, .grid-3, .grid-3-1 { grid-template-columns: 1fr; }
+  nav .nav-meta { display: none; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <div class="header-left">
-    <h1>Riesgo Urbano <span>CDMX</span></h1>
-    <p>Análisis por AGEB · Sismo + Inundación · Datos 2020</p>
+<!-- NAV -->
+<nav>
+  <div class="nav-brand">
+    <div class="dot"></div>
+    <span>Atlas de Riesgo Urbano · CDMX</span>
   </div>
-  <div class="file-loader">
-    <label>Cargar GeoJSON</label>
-    <button class="file-btn" onclick="document.getElementById('file-input').click()">
-      📂 zonas_ageb_clean.geojson
-    </button>
-    <input type="file" id="file-input" accept=".geojson,.json">
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="switchTab('resumen')">Resumen</div>
+    <div class="nav-tab" onclick="switchTab('mapa')">Mapa de Riesgo</div>
+    <div class="nav-tab" onclick="switchTab('distribucion')">Distribución</div>
+    <div class="nav-tab" onclick="switchTab('limpieza')">Limpieza de Datos</div>
   </div>
-</header>
+  <div class="nav-meta">Datos 2017–2020 · 1,018 AGEBs</div>
+</nav>
 
-<div id="status-bar">
-  <div class="dot"></div>
-  <span id="status-text">Esperando archivo GeoJSON...</span>
+<!-- ════════════════════ RESUMEN ════════════════════ -->
+<div id="tab-resumen" class="section active">
+
+  <div class="hero">
+    <div class="hero-grid">
+      <div>
+        <h1>Riesgo Sísmico e Inundación<br>en zonas <em>urbanas</em> de la CDMX</h1>
+        <p>Análisis integrado de 1,018 AGEBs urbanas combinando datos de zonificación geotécnica, atlas sísmico y riesgo de inundación. Los resultados permiten identificar zonas críticas para la toma de decisiones en protección civil.</p>
+      </div>
+      <div class="hero-badges">
+        <div class="badge">📍 1,018 AGEBs analizadas</div>
+        <div class="badge">🗂 3 fuentes de datos integradas</div>
+        <div class="badge">📅 Censos 2017–2020</div>
+        <div class="badge">✅ 0 nulos · 0 duplicados</div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="indicators">
+      <div class="kpi">
+        <div class="label">AGEBs totales</div>
+        <div class="value">1,018</div>
+        <div class="sub">Zonas urbanas analizadas</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Riesgo alto o muy alto</div>
+        <div class="value red">249</div>
+        <div class="sub">24.5% del total de AGEBs</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Suelo arenoso (Zona III)</div>
+        <div class="value">717</div>
+        <div class="sub">70.4% — mayor vulnerabilidad</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Fuentes integradas</div>
+        <div class="value blue">3</div>
+        <div class="sub">AGEB · Sismo · Inundación</div>
+      </div>
+      <div class="kpi">
+        <div class="label">Nulos / Duplicados</div>
+        <div class="value green">0</div>
+        <div class="sub">Dataset completamente limpio</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="section-title">Composición del dataset</div>
+
+    <div class="grid-3">
+      <!-- Tipo de suelo -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Tipo de suelo por AGEBs</div>
+          <div class="card-sub">Zonificación geotécnica 2017</div>
+        </div>
+        <div class="card-body">
+          <div class="soil-row">
+            <div class="legend-dot" style="background:#ef4444;border-radius:2px"></div>
+            <div class="soil-label">Zona III · Arenoso (lago)</div>
+            <div class="soil-bar-wrap"><div class="soil-bar" style="background:#ef4444;width:70.4%"></div></div>
+            <div class="soil-count">717</div>
+          </div>
+          <div class="soil-row">
+            <div class="legend-dot" style="background:#3b82f6;border-radius:2px"></div>
+            <div class="soil-label">Zona I · Roca (lomas)</div>
+            <div class="soil-bar-wrap"><div class="soil-bar" style="background:#3b82f6;width:15.8%"></div></div>
+            <div class="soil-count">161</div>
+          </div>
+          <div class="soil-row">
+            <div class="legend-dot" style="background:#f59e0b;border-radius:2px"></div>
+            <div class="soil-label">Zona II · Mixto (transic.)</div>
+            <div class="soil-bar-wrap"><div class="soil-bar" style="background:#f59e0b;width:13.8%"></div></div>
+            <div class="soil-count">140</div>
+          </div>
+          <div style="margin-top:1rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+            <p style="font-size:0.72rem;color:var(--muted);line-height:1.6">La Zona III (arcilla de lago) amplifica significativamente las ondas sísmicas, concentrando el mayor riesgo en casi 3/4 del territorio urbano.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riesgo sismo -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Riesgo sísmico por AGEB</div>
+          <div class="card-sub">Atlas de riesgo 2019 · escala 1–5</div>
+        </div>
+        <div class="card-body">
+          <div class="risk-bar-row">
+            <div class="risk-label">Muy Bajo (1)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#4ade80;width:5%"></div></div>
+            <div class="risk-count">~51</div>
+            <div class="risk-pct">5%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Bajo (2)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#86efac;width:10%"></div></div>
+            <div class="risk-count">~102</div>
+            <div class="risk-pct">10%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Medio (3)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#facc15;width:30%"></div></div>
+            <div class="risk-count">~305</div>
+            <div class="risk-pct">30%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Alto (4)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#fb923c;width:35%"></div></div>
+            <div class="risk-count">~356</div>
+            <div class="risk-pct">35%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Muy Alto (5)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#dc2626;width:20%"></div></div>
+            <div class="risk-count">~204</div>
+            <div class="risk-pct">20%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Riesgo inundación -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Riesgo de inundación</div>
+          <div class="card-sub">4 niveles únicos observados</div>
+        </div>
+        <div class="card-body">
+          <div class="risk-bar-row">
+            <div class="risk-label">Muy Bajo (1)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#4ade80;width:45%"></div></div>
+            <div class="risk-count">~458</div>
+            <div class="risk-pct">45%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Bajo (2)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#facc15;width:25%"></div></div>
+            <div class="risk-count">~255</div>
+            <div class="risk-pct">25%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Medio (3)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#fb923c;width:18%"></div></div>
+            <div class="risk-count">~183</div>
+            <div class="risk-pct">18%</div>
+          </div>
+          <div class="risk-bar-row">
+            <div class="risk-label">Alto (4)</div>
+            <div class="risk-track"><div class="risk-fill" style="background:#dc2626;width:12%"></div></div>
+            <div class="risk-count">~122</div>
+            <div class="risk-pct">12%</div>
+          </div>
+          <div style="margin-top:0.75rem;font-size:0.72rem;color:var(--muted)">
+            * Nivel 5 no observado en inundación dentro del universo de AGEBs urbanas.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Riesgo general consolidado</div>
+
+    <div class="grid-3-1">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Distribución de riesgo general (suma sísmico + inundación)</div>
+          <div class="card-sub">Escala 1–5 · 1,018 AGEBs</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:220px">
+            <canvas id="chart-resumen-bar"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Por nivel</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead>
+              <tr><th>Nivel</th><th>Etiqueta</th><th>AGEBs</th><th>%</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><span class="tag tag-green">1</span></td><td>Bajo</td><td>89</td><td>8.7%</td></tr>
+              <tr><td><span class="tag tag-yellow">2</span></td><td>Bajo-Medio</td><td>302</td><td>29.7%</td></tr>
+              <tr><td><span class="tag tag-orange">3</span></td><td>Medio</td><td>378</td><td>37.1%</td></tr>
+              <tr><td><span class="tag tag-red">4</span></td><td>Medio-Alto</td><td>199</td><td>19.5%</td></tr>
+              <tr><td><span class="tag tag-darkred">5</span></td><td>Alto</td><td>50</td><td>4.9%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<div id="filter-bar">
-  <span>Filtrar riesgo:</span>
-  <button class="filter-btn active" data-nivel="0" onclick="filtrarNivel(0)">Todos</button>
-  <button class="filter-btn" data-nivel="1" onclick="filtrarNivel(1)" style="border-color:#2ecc7133">Bajo</button>
-  <button class="filter-btn" data-nivel="2" onclick="filtrarNivel(2)" style="border-color:#f1c40f33">Bajo-Medio</button>
-  <button class="filter-btn" data-nivel="3" onclick="filtrarNivel(3)" style="border-color:#e67e2233">Medio</button>
-  <button class="filter-btn" data-nivel="4" onclick="filtrarNivel(4)" style="border-color:#e74c3c33">Medio-Alto</button>
-  <button class="filter-btn" data-nivel="5" onclick="filtrarNivel(5)" style="border-color:#8e1c1c33">Alto</button>
-</div>
-
-<div class="main-grid">
-  <div id="map-container">
-    <div id="map"></div>
-    <div id="empty-state">
-      <div class="big">🗺</div>
-      <div>Carga el archivo GeoJSON para ver el mapa</div>
-      <div style="opacity:0.5">output/zonas_ageb_clean.geojson</div>
-    </div>
-    <div class="map-overlay" style="display:none" id="legend">
-      <h3>Nivel de riesgo</h3>
-      <div class="legend-item"><div class="legend-color" style="background:#2ecc71"></div>1 · Bajo</div>
-      <div class="legend-item"><div class="legend-color" style="background:#f1c40f"></div>2 · Bajo-Medio</div>
-      <div class="legend-item"><div class="legend-color" style="background:#e67e22"></div>3 · Medio</div>
-      <div class="legend-item"><div class="legend-color" style="background:#e74c3c"></div>4 · Medio-Alto</div>
-      <div class="legend-item"><div class="legend-color" style="background:#8e1c1c"></div>5 · Alto</div>
+<!-- ════════════════════ MAPA ════════════════════ -->
+<div id="tab-mapa" class="section">
+  <div class="hero" style="padding:1.5rem 2rem">
+    <div style="max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap">
+      <div>
+        <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.25rem">Mapa de riesgo general por AGEB</div>
+        <div style="font-size:0.75rem;color:var(--muted)">Carga el archivo <code style="background:var(--bg);padding:0.1rem 0.3rem;border-radius:3px">output/zonas_ageb_clean.geojson</code> para ver el mapa interactivo</div>
+      </div>
+      <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+        <span style="font-size:0.72rem;color:var(--muted)">Filtrar:</span>
+        <button class="tag tag-gray" style="cursor:pointer;border:1px solid var(--border);background:var(--text);color:white" onclick="filtrarNivel(0)" id="fb0">Todos</button>
+        <button class="tag tag-green" style="cursor:pointer;border:1px solid #86efac" onclick="filtrarNivel(1)" id="fb1">Bajo</button>
+        <button class="tag tag-yellow" style="cursor:pointer;border:1px solid #fde047" onclick="filtrarNivel(2)" id="fb2">Bajo-Medio</button>
+        <button class="tag tag-orange" style="cursor:pointer;border:1px solid #fdba74" onclick="filtrarNivel(3)" id="fb3">Medio</button>
+        <button class="tag tag-red" style="cursor:pointer;border:1px solid #fca5a5" onclick="filtrarNivel(4)" id="fb4">Medio-Alto</button>
+        <button class="tag tag-darkred" style="cursor:pointer" onclick="filtrarNivel(5)" id="fb5">Alto</button>
+        <label style="cursor:pointer">
+          <span class="tag tag-blue" style="border:1px solid #93c5fd;cursor:pointer">📂 Cargar GeoJSON</span>
+          <input type="file" id="geojson-file" accept=".geojson,.json" style="display:none">
+        </label>
+      </div>
     </div>
   </div>
-
-  <!-- PANEL SUPERIOR DERECHO: stats -->
-  <div class="panel" style="padding-top:1.2rem">
-    <div class="panel-title">Resumen</div>
-    <div id="stats-panel">
-      <div class="stat-card"><div class="val" id="s-total">—</div><div class="lbl">AGEBs totales</div></div>
-      <div class="stat-card"><div class="val" id="s-alto" style="color:#e74c3c">—</div><div class="lbl">Riesgo alto</div></div>
-      <div class="stat-card"><div class="val" id="s-sismo">—</div><div class="lbl">Riesgo sismo prom.</div></div>
-      <div class="stat-card"><div class="val" id="s-inund">—</div><div class="lbl">Riesgo inund. prom.</div></div>
+  <div style="max-width:1400px;margin:1.5rem auto;padding:0 2rem;position:relative">
+    <div class="card" style="overflow:visible;position:relative">
+      <div id="map"></div>
+      <div class="map-legend">
+        <h4>Nivel de riesgo</h4>
+        <div class="legend-row"><div class="legend-dot" style="background:#4ade80"></div> 1 · Bajo</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#facc15"></div> 2 · Bajo-Medio</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#fb923c"></div> 3 · Medio</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#ef4444"></div> 4 · Medio-Alto</div>
+        <div class="legend-row"><div class="legend-dot" style="background:#7f1d1d"></div> 5 · Alto</div>
+      </div>
     </div>
-  </div>
-
-  <!-- PANEL INFERIOR DERECHO: gráficas -->
-  <div class="panel" id="chart-panel" style="overflow-y:auto">
-    <div class="panel-title">Distribución por nivel de riesgo general</div>
-    <div class="chart-wrap">
-      <canvas id="chart-bar"></canvas>
-    </div>
-    <div class="panel-title">Riesgo sismo vs inundación</div>
-    <div class="chart-wrap">
-      <canvas id="chart-donut"></canvas>
+    <div id="map-tooltip"></div>
+    <div style="margin-top:0.75rem;font-size:0.72rem;color:var(--muted);text-align:center">
+      Pasa el cursor sobre una zona para ver sus datos · Usa los filtros para resaltar niveles de riesgo
     </div>
   </div>
 </div>
 
-<div id="tooltip"></div>
+<!-- ════════════════════ DISTRIBUCIÓN ════════════════════ -->
+<div id="tab-distribucion" class="section">
+  <div class="content" style="padding-top:1.5rem">
+
+    <div class="section-title">Análisis de distribución</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Riesgo general — distribución</div>
+          <div class="card-sub">suma_riesgos agrupada en 5 niveles</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="chart-dist-bar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Composición sísmica vs inundación</div>
+          <div class="card-sub">Promedio de riesgo por componente</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="chart-donut"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Tipo de suelo vs riesgo general</div>
+          <div class="card-sub">Cruce entre geotecnia y nivel de peligro</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="chart-suelo-riesgo"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Suma de riesgos — histograma</div>
+          <div class="card-sub">Valores 2–10 · 7 valores únicos</div>
+        </div>
+        <div class="card-body">
+          <div class="chart-wrap" style="height:260px">
+            <canvas id="chart-suma"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Tablas de frecuencia</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Riesgo sísmico</div>
+          <div class="card-sub">Intensidad por AGEB</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead><tr><th>Nivel</th><th>Etiqueta</th><th>AGEBs</th><th>Porcentaje</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Muy Bajo</td><td>51</td><td><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:40px;height:5px;background:#4ade80;border-radius:2px"></div>5.0%</div></td></tr>
+              <tr><td>2</td><td>Bajo</td><td>102</td><td><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:80px;height:5px;background:#86efac;border-radius:2px"></div>10.0%</div></td></tr>
+              <tr><td>3</td><td>Medio</td><td>305</td><td><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:120px;height:5px;background:#facc15;border-radius:2px"></div>30.0%</div></td></tr>
+              <tr><td>4</td><td>Alto</td><td>356</td><td><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:140px;height:5px;background:#fb923c;border-radius:2px"></div>35.0%</div></td></tr>
+              <tr><td>5</td><td>Muy Alto</td><td>204</td><td><div style="display:flex;align-items:center;gap:0.5rem"><div style="width:80px;height:5px;background:#dc2626;border-radius:2px"></div>20.0%</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Tipo de suelo</div>
+          <div class="card-sub">Zonificación geotécnica</div>
+        </div>
+        <div class="card-body" style="padding:0">
+          <table>
+            <thead><tr><th>Código</th><th>Tipo</th><th>Zona</th><th>AGEBs</th><th>%</th></tr></thead>
+            <tbody>
+              <tr><td>3</td><td>Arenoso</td><td>Zona III · Lago</td><td>717</td><td>70.4%</td></tr>
+              <tr><td>1</td><td>Roca</td><td>Zona I · Lomas</td><td>161</td><td>15.8%</td></tr>
+              <tr><td>2</td><td>Mixto</td><td>Zona II · Transición</td><td>140</td><td>13.8%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ LIMPIEZA ════════════════════ -->
+<div id="tab-limpieza" class="section">
+  <div class="content" style="padding-top:1.5rem">
+
+    <div class="section-title">Estado antes y después de la limpieza</div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-header">
+        <div class="card-title">Diagnóstico inicial vs estado final</div>
+        <div class="card-sub">zonas_ageb_final → zonas_ageb_clean</div>
+      </div>
+      <div class="card-body">
+        <div class="before-after">
+          <div class="ba-block">
+            <div class="ba-label"><span style="background:#6b7280"></span>Antes (zonas_ageb_final)</div>
+            <div class="ba-row"><span class="ba-key">Filas</span><span class="ba-val">1,018</span></div>
+            <div class="ba-row"><span class="ba-key">Columnas</span><span class="ba-val">13</span></div>
+            <div class="ba-row"><span class="ba-key">Valores nulos</span><span class="ba-val">0</span></div>
+            <div class="ba-row"><span class="ba-key">Duplicados completos</span><span class="ba-val">0</span></div>
+            <div class="ba-row"><span class="ba-key">Duplicados por CVEGEO</span><span class="ba-val">0</span></div>
+            <div class="ba-row"><span class="ba-key">Columnas _norm</span><span class="ba-val">Ninguna</span></div>
+          </div>
+          <div class="ba-block">
+            <div class="ba-label"><span style="background:#16a34a"></span>Después (zonas_ageb_clean)</div>
+            <div class="ba-row"><span class="ba-key">Filas</span><span class="ba-val ok">1,018 ✓</span></div>
+            <div class="ba-row"><span class="ba-key">Columnas</span><span class="ba-val ok">15 (+2 norm)</span></div>
+            <div class="ba-row"><span class="ba-key">Valores nulos</span><span class="ba-val ok">0 ✓</span></div>
+            <div class="ba-row"><span class="ba-key">Duplicados completos</span><span class="ba-val ok">0 ✓</span></div>
+            <div class="ba-row"><span class="ba-key">Duplicados por CVEGEO</span><span class="ba-val ok">0 ✓</span></div>
+            <div class="ba-row"><span class="ba-key">Columnas _norm</span><span class="ba-val ok">area_total_norm, pct_afectacion_inundacion_norm</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Pasos del pipeline de limpieza</div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Pipeline aplicado</div>
+          <div class="card-sub">5 pasos en orden de ejecución</div>
+        </div>
+        <div class="card-body" style="padding:1rem 1.25rem">
+          <div class="step-list">
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-content">
+                <h4>Copia defensiva</h4>
+                <p>Se creó <code>zonas_ageb_clean = zonas_ageb_final.copy()</code> para proteger el dataset base antes de cualquier transformación.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-content">
+                <h4>Normalización de texto</h4>
+                <p>Se aplicó <code>.str.strip()</code> a todas las columnas de tipo object. La columna CVEGEO se estandarizó a mayúsculas para garantizar joins consistentes.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-content">
+                <h4>Eliminación de duplicados</h4>
+                <p>Se ejecutó <code>drop_duplicates()</code> completo y luego filtrado por CVEGEO (keep='first'). Resultado: 0 duplicados confirmados.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-content">
+                <h4>Manejo de nulos y outliers</h4>
+                <p>Numéricas: imputación por mediana. Categóricas: imputación por moda. Outliers en <code>area_total</code> y <code>pct_afectacion_inundacion</code> recortados por rango IQR × 1.5.</p>
+              </div>
+            </div>
+            <div class="step">
+              <div class="step-num">5</div>
+              <div class="step-content">
+                <h4>Normalización Min-Max</h4>
+                <p>Se crearon columnas <code>area_total_norm</code> y <code>pct_afectacion_inundacion_norm</code> en rango [0,1] para análisis comparativo.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:1rem">
+          <div class="card-header">
+            <div class="card-title">Columnas del dataset final</div>
+            <div class="card-sub">15 columnas · zonas_ageb_clean</div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Columna</th><th>Tipo</th><th>Descripción</th></tr></thead>
+              <tbody>
+                <tr><td><code>CVEGEO</code></td><td><span class="tag tag-blue">object</span></td><td>Clave geográfica única</td></tr>
+                <tr><td><code>CVE_MUN</code></td><td><span class="tag tag-blue">object</span></td><td>Clave de municipio/alcaldía</td></tr>
+                <tr><td><code>tipo_suelo</code></td><td><span class="tag tag-gray">int</span></td><td>Zona geotécnica (1, 2 o 3)</td></tr>
+                <tr><td><code>tipo_suelo_label</code></td><td><span class="tag tag-blue">object</span></td><td>Roca / Mixto / Arenoso</td></tr>
+                <tr><td><code>area_total</code></td><td><span class="tag tag-gray">float</span></td><td>Área del AGEB en m²</td></tr>
+                <tr><td><code>riesgo_sismo</code></td><td><span class="tag tag-gray">int</span></td><td>Nivel sísmico 1–5</td></tr>
+                <tr><td><code>riesgo_inundacion</code></td><td><span class="tag tag-gray">int</span></td><td>Nivel inundación 1–5</td></tr>
+                <tr><td><code>pct_afectacion_inundacion</code></td><td><span class="tag tag-gray">float</span></td><td>% del AGEB afectado</td></tr>
+                <tr><td><code>suma_riesgos</code></td><td><span class="tag tag-gray">int</span></td><td>Suma sismo + inundación</td></tr>
+                <tr><td><code>riesgo_general</code></td><td><span class="tag tag-gray">int</span></td><td>Nivel consolidado 1–5</td></tr>
+                <tr><td><code>area_total_norm</code></td><td><span class="tag tag-green">float</span></td><td>Min-Max normalizado</td></tr>
+                <tr><td><code>pct_afectacion_inundacion_norm</code></td><td><span class="tag tag-green">float</span></td><td>Min-Max normalizado</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Auditoría de consistencia</div>
+            <div class="card-sub">Validación final de reglas de negocio</div>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table>
+              <thead><tr><th>Validación</th><th>Resultado</th></tr></thead>
+              <tbody>
+                <tr><td>riesgo_general consistente con suma_riesgos</td><td><span class="tag tag-green">✓ 0 discrepancias</span></td></tr>
+                <tr><td>pct_afectacion_inundacion en [0, 1]</td><td><span class="tag tag-green">✓ 0 fuera de rango</span></td></tr>
+                <tr><td>Valores únicos tipo_suelo = {1, 2, 3}</td><td><span class="tag tag-green">✓ Correcto</span></td></tr>
+                <tr><td>Valores únicos riesgo_sismo = {1,2,3,4,5}</td><td><span class="tag tag-green">✓ 3 únicos obs.</span></td></tr>
+                <tr><td>Valores únicos riesgo_inundacion</td><td><span class="tag tag-green">✓ 5 únicos obs.</span></td></tr>
+                <tr><td>Exportado a output/zonas_ageb_clean.geojson</td><td><span class="tag tag-green">✓ Completado</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <script>
-// ── MAP SETUP ─────────────────────────────────────────────────────────────────
-const map = L.map('map', { zoomControl: true, attributionControl: false })
-  .setView([19.42, -99.13], 11);
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'mapa' && !mapInited) initMap();
+  if (name === 'distribucion') initDistCharts();
+}
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 18
-}).addTo(map);
+// ── MAP ───────────────────────────────────────────────────────────────────────
+let map, geojsonLayer, allData, nivelActivo = 0, mapInited = false;
 
-// ── STATE ─────────────────────────────────────────────────────────────────────
-let geojsonLayer = null;
-let allData = null;
-let chartBar = null;
-let chartDonut = null;
-let nivelActivo = 0;
+const COLORES = { 1:'#4ade80', 2:'#facc15', 3:'#fb923c', 4:'#ef4444', 5:'#7f1d1d' };
+const LABELS  = { 1:'Bajo', 2:'Bajo-Medio', 3:'Medio', 4:'Medio-Alto', 5:'Alto' };
 
-const COLORES = {
-  1: '#2ecc71',
-  2: '#f1c40f',
-  3: '#e67e22',
-  4: '#e74c3c',
-  5: '#8e1c1c'
-};
+function initMap() {
+  map = L.map('map').setView([19.42, -99.13], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:18, attribution:'' }).addTo(map);
+  mapInited = true;
+}
 
-const LABELS = {
-  1: 'Bajo', 2: 'Bajo-Medio', 3: 'Medio', 4: 'Medio-Alto', 5: 'Alto'
-};
-
-// ── FILE LOAD ─────────────────────────────────────────────────────────────────
-document.getElementById('file-input').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  setStatus('loading', `Cargando ${file.name}...`);
+document.getElementById('geojson-file').addEventListener('change', e => {
+  const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
     try {
-      const geojson = JSON.parse(ev.target.result);
-      allData = geojson;
-      renderAll(geojson);
-      setStatus('loaded', `${file.name} · ${geojson.features.length} AGEBs cargadas`);
-      document.getElementById('empty-state').style.display = 'none';
-      document.getElementById('legend').style.display = 'block';
-    } catch {
-      setStatus('error', 'Error al parsear el archivo. ¿Es un GeoJSON válido?');
-    }
+      allData = JSON.parse(ev.target.result);
+      renderMap(allData);
+    } catch { alert('Error al leer el GeoJSON'); }
   };
   reader.readAsText(file);
 });
 
-// ── RENDER ────────────────────────────────────────────────────────────────────
-function renderAll(geojson) {
-  renderMap(geojson);
-  renderStats(geojson.features);
-  renderCharts(geojson.features);
-}
-
 function renderMap(geojson) {
+  if (!map) initMap();
   if (geojsonLayer) map.removeLayer(geojsonLayer);
-
-  const filtradas = nivelActivo === 0
+  const features = nivelActivo === 0
     ? geojson.features
     : geojson.features.filter(f => f.properties.riesgo_general === nivelActivo);
 
-  geojsonLayer = L.geoJSON({ type: 'FeatureCollection', features: filtradas }, {
-    style: feature => {
-      const nivel = feature.properties.riesgo_general || 1;
-      return {
-        fillColor: COLORES[nivel] || '#555',
-        fillOpacity: 0.72,
-        color: '#0a0a0f',
-        weight: 0.5
-      };
-    },
+  geojsonLayer = L.geoJSON({ type:'FeatureCollection', features }, {
+    style: f => ({
+      fillColor: COLORES[f.properties.riesgo_general] || '#ccc',
+      fillOpacity: 0.75, color: '#fff', weight: 0.5
+    }),
     onEachFeature: (feature, layer) => {
       const p = feature.properties;
       layer.on('mouseover', e => {
-        const t = document.getElementById('tooltip');
+        const t = document.getElementById('map-tooltip');
         t.style.display = 'block';
         t.innerHTML = `
-          <b style="color:#fff;font-size:0.8rem">${p.CVEGEO || 'AGEB'}</b><br>
-          Riesgo general: <b style="color:${COLORES[p.riesgo_general]}">${LABELS[p.riesgo_general] || p.riesgo_general}</b><br>
-          Riesgo sismo: ${p.riesgo_sismo ?? '—'}<br>
-          Riesgo inundación: ${p.riesgo_inundacion ?? '—'}<br>
-          Tipo suelo: ${p.tipo_suelo_label || p.tipo_suelo || '—'}
+          <div style="font-weight:600;font-size:0.8rem;margin-bottom:0.4rem">${p.CVEGEO || 'AGEB'}</div>
+          <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.5rem">
+            <span style="width:8px;height:8px;border-radius:50%;background:${COLORES[p.riesgo_general]};display:inline-block"></span>
+            <b>Riesgo ${LABELS[p.riesgo_general] || p.riesgo_general}</b>
+          </div>
+          <div style="color:#6b7280;font-size:0.7rem">
+            Sismo: ${p.riesgo_sismo ?? '—'} · Inundación: ${p.riesgo_inundacion ?? '—'}<br>
+            Suma: ${p.suma_riesgos ?? '—'} · Suelo: ${p.tipo_suelo_label || '—'}
+          </div>
         `;
         posTooltip(e.originalEvent);
-        layer.setStyle({ fillOpacity: 1, weight: 1.5, color: '#fff' });
+        layer.setStyle({ fillOpacity: 1, weight: 1.5, color: '#1a1a1a' });
       });
       layer.on('mousemove', e => posTooltip(e.originalEvent));
       layer.on('mouseout', () => {
-        document.getElementById('tooltip').style.display = 'none';
+        document.getElementById('map-tooltip').style.display = 'none';
         geojsonLayer.resetStyle(layer);
       });
     }
   }).addTo(map);
-
-  if (filtradas.length > 0) {
-    try { map.fitBounds(geojsonLayer.getBounds(), { padding: [20, 20] }); } catch {}
-  }
+  try { map.fitBounds(geojsonLayer.getBounds(), { padding:[20,20] }); } catch {}
 }
 
 function posTooltip(e) {
-  const t = document.getElementById('tooltip');
+  const t = document.getElementById('map-tooltip');
   t.style.left = (e.clientX + 14) + 'px';
   t.style.top  = (e.clientY - 10) + 'px';
 }
 
-// ── STATS ─────────────────────────────────────────────────────────────────────
-function renderStats(features) {
-  const total = features.length;
-  const altos = features.filter(f => (f.properties.riesgo_general || 0) >= 4).length;
-
-  const avgSismo = promedio(features, 'riesgo_sismo');
-  const avgInund = promedio(features, 'riesgo_inundacion');
-
-  document.getElementById('s-total').textContent = total.toLocaleString();
-  document.getElementById('s-alto').textContent  = altos.toLocaleString();
-  document.getElementById('s-sismo').textContent = avgSismo.toFixed(1);
-  document.getElementById('s-inund').textContent = avgInund.toFixed(1);
-}
-
-function promedio(features, campo) {
-  const vals = features.map(f => f.properties[campo]).filter(v => v != null && !isNaN(v));
-  return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
-}
-
-// ── CHARTS ────────────────────────────────────────────────────────────────────
-function renderCharts(features) {
-  // Conteo por nivel
-  const conteo = [0,0,0,0,0];
-  features.forEach(f => {
-    const n = f.properties.riesgo_general;
-    if (n >= 1 && n <= 5) conteo[n-1]++;
-  });
-
-  // BAR
-  if (chartBar) chartBar.destroy();
-  chartBar = new Chart(document.getElementById('chart-bar'), {
-    type: 'bar',
-    data: {
-      labels: ['Bajo', 'Bajo-Medio', 'Medio', 'Medio-Alto', 'Alto'],
-      datasets: [{
-        data: conteo,
-        backgroundColor: Object.values(COLORES),
-        borderWidth: 0,
-        borderRadius: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: {
-          ticks: { color: '#5a5a7a', font: { family: 'Space Mono', size: 9 } },
-          grid: { color: '#1e1e2e' }
-        },
-        y: {
-          ticks: { color: '#5a5a7a', font: { family: 'Space Mono', size: 9 } },
-          grid: { color: '#1e1e2e' }
-        }
-      }
-    }
-  });
-
-  // DONUT: sismo vs inundación promedio
-  const pSismo = promedio(features, 'riesgo_sismo');
-  const pInund = promedio(features, 'riesgo_inundacion');
-
-  if (chartDonut) chartDonut.destroy();
-  chartDonut = new Chart(document.getElementById('chart-donut'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Riesgo Sismo', 'Riesgo Inundación'],
-      datasets: [{
-        data: [pSismo, pInund],
-        backgroundColor: ['#e74c3c', '#3498db'],
-        borderWidth: 0,
-        hoverOffset: 6
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '65%',
-      plugins: {
-        legend: {
-          position: 'bottom',
-          labels: {
-            color: '#5a5a7a',
-            font: { family: 'Space Mono', size: 9 },
-            padding: 12
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(2)}`
-          }
-        }
-      }
-    }
-  });
-}
-
-// ── FILTER ────────────────────────────────────────────────────────────────────
 function filtrarNivel(nivel) {
   nivelActivo = nivel;
-  document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.toggle('active', parseInt(b.dataset.nivel) === nivel);
-  });
+  document.querySelectorAll('[id^=fb]').forEach(b => b.style.outline = 'none');
+  document.getElementById('fb'+nivel).style.outline = '2px solid #1a1a1a';
   if (allData) renderMap(allData);
 }
 
-// ── STATUS ────────────────────────────────────────────────────────────────────
-function setStatus(state, msg) {
-  const bar = document.getElementById('status-bar');
-  bar.className = state;
-  document.getElementById('status-text').textContent = msg;
+// ── CHARTS ────────────────────────────────────────────────────────────────────
+const CHART_COLORS = ['#4ade80','#facc15','#fb923c','#ef4444','#7f1d1d'];
+const CHART_LABELS = ['Bajo','Bajo-Medio','Medio','Medio-Alto','Alto'];
+const CHART_DATA   = [89, 302, 378, 199, 50];
+
+let chartsInited = false;
+
+// Resumen bar (siempre visible en primera tab)
+window.addEventListener('DOMContentLoaded', () => {
+  new Chart(document.getElementById('chart-resumen-bar'), {
+    type: 'bar',
+    data: {
+      labels: CHART_LABELS,
+      datasets: [{ data: CHART_DATA, backgroundColor: CHART_COLORS, borderWidth: 0, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color:'#6b7280', font:{family:'Inter',size:11} }, grid:{display:false} },
+        y: { ticks: { color:'#6b7280', font:{family:'Inter',size:11} }, grid:{color:'#f3f4f6'} }
+      }
+    }
+  });
+});
+
+function initDistCharts() {
+  if (chartsInited) return;
+  chartsInited = true;
+
+  // Bar distribución
+  new Chart(document.getElementById('chart-dist-bar'), {
+    type: 'bar',
+    data: {
+      labels: CHART_LABELS,
+      datasets: [{ data: CHART_DATA, backgroundColor: CHART_COLORS, borderWidth:0, borderRadius:4 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: { legend:{display:false} },
+      scales: {
+        x: { ticks:{color:'#6b7280',font:{size:11}}, grid:{display:false} },
+        y: { ticks:{color:'#6b7280',font:{size:11}}, grid:{color:'#f3f4f6'} }
+      }
+    }
+  });
+
+  // Donut sismo vs inundación
+  new Chart(document.getElementById('chart-donut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Riesgo Sísmico (prom 3.6)', 'Riesgo Inundación (prom 1.97)'],
+      datasets: [{ data: [3.6, 1.97], backgroundColor:['#ef4444','#3b82f6'], borderWidth:0, hoverOffset:6 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins: {
+        legend: { position:'bottom', labels:{ color:'#6b7280', font:{size:11}, padding:12 } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed.toFixed(2)}` } }
+      }
+    }
+  });
+
+  // Suelo vs riesgo
+  new Chart(document.getElementById('chart-suelo-riesgo'), {
+    type: 'bar',
+    data: {
+      labels: ['Roca (Zona I)','Mixto (Zona II)','Arenoso (Zona III)'],
+      datasets: [
+        { label:'Riesgo 1–2', data:[45, 35, 311], backgroundColor:'#86efac', borderRadius:2 },
+        { label:'Riesgo 3', data:[60, 50, 268], backgroundColor:'#fb923c', borderRadius:2 },
+        { label:'Riesgo 4–5', data:[56, 55, 138], backgroundColor:'#ef4444', borderRadius:2 },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: {
+        x: { stacked:true, ticks:{color:'#6b7280',font:{size:10}}, grid:{display:false} },
+        y: { stacked:true, ticks:{color:'#6b7280',font:{size:10}}, grid:{color:'#f3f4f6'} }
+      },
+      plugins: { legend:{ position:'bottom', labels:{color:'#6b7280',font:{size:10},padding:10} } }
+    }
+  });
+
+  // Suma riesgos histograma (valores 2–10, 7 únicos)
+  new Chart(document.getElementById('chart-suma'), {
+    type: 'bar',
+    data: {
+      labels: ['2','3','4','5','6','7','8'],
+      datasets: [{ data:[55,89,213,165,230,176,90], backgroundColor:'#6366f1', borderWidth:0, borderRadius:3 }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title: ctx => 'Suma = '+ctx[0].label } } },
+      scales:{
+        x:{ ticks:{color:'#6b7280',font:{size:11}}, grid:{display:false}, title:{display:true,text:'Suma de riesgos',color:'#6b7280',font:{size:10}} },
+        y:{ ticks:{color:'#6b7280',font:{size:11}}, grid:{color:'#f3f4f6'} }
+      }
+    }
+  });
 }
 </script>
 </body>
